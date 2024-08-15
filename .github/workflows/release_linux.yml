@@ -25,11 +25,12 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
+        
       - name: Build for Linux
         run: |
           rustup target add ${{ matrix.target }}
           cargo build --release --target ${{ matrix.target }}
+          working-directory: src-tauri
 
       - name: Get Version
         run: |

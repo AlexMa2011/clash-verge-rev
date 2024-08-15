@@ -1,4 +1,4 @@
-name: Release Build_Linux Only
+name: Release Build Linux Only
 
 on:
   workflow_dispatch:
@@ -27,13 +27,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build for Linux
-        uses: ./.github/build-for-linux
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
-          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
-        with:
-          target: ${{ matrix.target }}
+        run: |
+          rustup target add ${{ matrix.target }}
+          cargo build --release --target ${{ matrix.target }}
 
       - name: Get Version
         run: |
@@ -41,13 +37,9 @@ jobs:
           sudo apt-get install jq
           echo "VERSION=$(cat package.json | jq '.version' | tr -d '"')" >> $GITHUB_ENV
 
-      - name: Upload Release to GitHub
-        uses: softprops/action-gh-release@v2
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v3
         with:
-          tag_name: v${{env.VERSION}}
-          name: "Clash Verge Rev v${{env.VERSION}}"
-          body: "More new features are now supported."
-          token: ${{ secrets.GITHUB_TOKEN }}
-          files: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
-            src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
+          name: build-artifacts
+          path: |
+            target/${{ matrix.target }}/release/*
